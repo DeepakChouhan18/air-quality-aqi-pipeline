@@ -82,7 +82,23 @@ See `docs/validation_rules.md`. Covers missing fields, duplicates, value-range c
 Connect Tableau Public to the `analytics` schema (or export CSVs from those tables) and build the 6 views: AQI KPI, AQI Trend, Station Comparison, Pollutant Analysis, Hourly/Monthly Pattern, Weather Impact.
 
 ## 15. Results
-_(Fill in once you've run the pipeline against real data — e.g., "Average AQI over the observed period was X, categorized as Moderate.")_
+Pipeline run on **2026-09-06** for **Bengaluru** (12.97°N, 77.59°E):
+
+| Metric | Value |
+|---|---|
+| Monitoring stations discovered | 26 |
+| Raw measurements extracted | 266 |
+| Measurements after validation | 266 (0 rejected) |
+| Weather records (hourly, 14 days) | 336 |
+| Pollutants tracked | CO, NO, NO₂, NOₓ, O₃, PM1, PM2.5, PM10, SO₂ |
+| Days with AQI data | 7 |
+| Average PM2.5 AQI | ~68 — **Moderate** |
+| Worst observed day | 2026-07-25, AQI 101.9 — **Unhealthy for Sensitive Groups** |
+| Avg temperature | 25.0 °C |
+| Avg humidity | 67.7 % |
+| Total precipitation | 20.5 mm |
+
+All pipeline stages (extract → validate → transform → analytics) completed successfully with full lineage recorded in `data/logs/pipeline_runs.csv`.
 
 ## 16. Limitations
 - Single-city scope for this phase.
