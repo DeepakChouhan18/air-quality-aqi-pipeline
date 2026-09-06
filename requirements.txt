@@ -1,0 +1,7 @@
+requests==2.32.3
+pandas==2.1.4
+python-dotenv==1.0.1
+SQLAlchemy==1.4.52
+psycopg2-binary==2.9.9
+apache-airflow==2.9.3
+pytest==8.2.2
