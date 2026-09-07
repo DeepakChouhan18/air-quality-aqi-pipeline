@@ -40,7 +40,7 @@ See the project tree — key folders: `src/ingestion`, `src/transformation`, `sr
 ## 7. Setup Instructions
 ```bash
 git clone <your-repo-url>
-cd air-quality-data-engineering
+cd air-quality-aqi-pipeline
 python -m venv .venv
 source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
