@@ -1,0 +1,30 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: aqi_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-aqi_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d   # auto-runs schemas.sql/tables.sql/analytics.sql on first start
+
+  # NOTE: for a full local Airflow setup, use the official quick-start
+  # docker-compose.yaml from https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html
+  # and mount this project's dags/ and src/ folders into it, e.g.:
+  #
+  # volumes:
+  #   - ./dags:/opt/airflow/dags
+  #   - ./src:/opt/airflow/src
+  #
+  # Keeping Airflow's compose file separate avoids fighting with its
+  # many required services (webserver, scheduler, triggerer, redis).
+
+volumes:
+  pg_data:

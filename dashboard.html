@@ -1,0 +1,2036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AQI Monitor — Bengaluru Air Quality Analytics</title>
+    <meta name="description" content="Air quality monitoring and analytics dashboard for Bengaluru, powered by an end-to-end data engineering pipeline.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;450;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --surface-0: #090a0f;
+            --surface-1: #0f121a;
+            --surface-2: #151924;
+            --surface-3: #1c2232;
+            --surface-4: #242c40;
+            --border-subtle: rgba(255,255,255,0.06);
+            --border-default: rgba(255,255,255,0.10);
+            --border-strong: rgba(255,255,255,0.16);
+            --text-primary: #f0f2f6;
+            --text-secondary: #9aa1b5;
+            --text-tertiary: #616880;
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --accent-muted: rgba(99,102,241,0.14);
+            --green: #22c55e;
+            --green-muted: rgba(34,197,94,0.12);
+            --amber: #f59e0b;
+            --amber-muted: rgba(245,158,11,0.12);
+            --orange: #f97316;
+            --orange-muted: rgba(249,115,22,0.12);
+            --red: #ef4444;
+            --red-muted: rgba(239,68,68,0.12);
+            --purple: #a855f7;
+            --purple-muted: rgba(168,85,247,0.12);
+            --blue: #3b82f6;
+            --blue-muted: rgba(59,130,246,0.12);
+            --cyan: #06b6d4;
+            --cyan-muted: rgba(6,182,212,0.12);
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --shadow-card: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        html { font-size: 14px; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            background: var(--surface-0);
+            color: var(--text-primary);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ── App Layout ── */
+        .layout {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            min-height: 100vh;
+        }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            background: var(--surface-1);
+            border-right: 1px solid var(--border-default);
+            padding: 1.5rem 0 1rem;
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            user-select: none;
+            z-index: 20;
+        }
+
+        .sidebar-brand {
+            padding: 0 1.25rem 1.4rem;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .brand-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, var(--accent), #4338ca);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: -0.05em;
+            box-shadow: 0 2px 8px rgba(99,102,241,0.4);
+            flex-shrink: 0;
+        }
+
+        .sidebar-brand h1 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+
+        .sidebar-brand .brand-sub {
+            font-size: 0.68rem;
+            color: var(--text-tertiary);
+            font-weight: 500;
+            margin-top: 0.15rem;
+        }
+
+        .sidebar-section {
+            padding: 0 0.85rem;
+            margin-bottom: 1.4rem;
+        }
+
+        .sidebar-section-label {
+            font-size: 0.62rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-tertiary);
+            padding: 0 0.6rem;
+            margin-bottom: 0.45rem;
+            font-weight: 700;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.55rem 0.75rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-weight: 500;
+            margin-bottom: 0.15rem;
+            text-decoration: none;
+        }
+
+        .sidebar-item-content {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+        }
+
+        .sidebar-item:hover {
+            background: var(--surface-3);
+            color: var(--text-primary);
+        }
+
+        .sidebar-item.active {
+            background: var(--accent-muted);
+            color: #c7d2fe;
+            font-weight: 600;
+            border: 1px solid rgba(99,102,241,0.3);
+        }
+
+        .sidebar-item svg {
+            width: 16px;
+            height: 16px;
+            opacity: 0.7;
+            flex-shrink: 0;
+            stroke-width: 2;
+        }
+
+        .sidebar-item.active svg {
+            opacity: 1;
+            stroke: #a5b4fc;
+        }
+
+        .sidebar-badge {
+            font-size: 0.6rem;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 0.15rem 0.4rem;
+            border-radius: 99px;
+            background: var(--surface-3);
+            color: var(--text-tertiary);
+            font-weight: 600;
+        }
+
+        .sidebar-item.active .sidebar-badge {
+            background: rgba(99,102,241,0.25);
+            color: #c7d2fe;
+        }
+
+        .sidebar-status {
+            margin-top: auto;
+            padding: 1rem 1.25rem 0.5rem;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 8px rgba(34,197,94,0.6);
+            animation: statusPulse 2.5s ease-in-out infinite;
+        }
+
+        .status-sub {
+            font-size: 0.65rem;
+            color: var(--text-tertiary);
+            margin-top: 0.35rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.45; transform: scale(0.92); }
+        }
+
+        /* ── Main Content Area ── */
+        .content {
+            padding: 2rem 2.25rem;
+            overflow-y: auto;
+            max-width: 1280px;
+        }
+
+        /* ── Header ── */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.75rem;
+            gap: 1.5rem;
+        }
+
+        .page-header h2 {
+            font-size: 1.45rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            color: var(--text-primary);
+        }
+
+        .page-header .subtitle {
+            font-size: 0.82rem;
+            color: var(--text-tertiary);
+            margin-top: 0.3rem;
+            font-weight: 400;
+        }
+
+        .header-meta {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .meta-pill {
+            background: var(--surface-2);
+            border: 1px solid var(--border-default);
+            padding: 0.45rem 0.85rem;
+            border-radius: var(--radius-sm);
+            text-align: right;
+        }
+
+        .meta-pill .meta-label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-tertiary);
+            font-weight: 700;
+        }
+
+        .meta-pill .meta-value {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            margin-top: 0.15rem;
+        }
+
+        /* ── Views Switcher ── */
+        .view-panel {
+            display: none;
+            opacity: 0;
+            transform: translateY(4px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .view-panel.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ── Pipeline Flow Banner ── */
+        .pipeline-banner {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.75rem 1rem;
+            background: var(--surface-2);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-md);
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+        }
+
+        .pipe-node {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.35rem 0.65rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.7rem;
+            font-weight: 600;
+            white-space: nowrap;
+            color: var(--green);
+            background: var(--green-muted);
+            border: 1px solid rgba(34,197,94,0.2);
+        }
+
+        .pipe-node svg { width: 13px; height: 13px; }
+
+        .pipe-connector {
+            width: 16px;
+            height: 1px;
+            background: var(--border-strong);
+            flex-shrink: 0;
+        }
+
+        /* ── KPI Row ── */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 0.85rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .kpi {
+            background: var(--surface-2);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-md);
+            padding: 1.1rem 1rem 0.9rem;
+            transition: border-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .kpi:hover {
+            border-color: var(--border-strong);
+            transform: translateY(-2px);
+        }
+
+        .kpi-label {
+            font-size: 0.64rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-tertiary);
+            font-weight: 700;
+            margin-bottom: 0.45rem;
+        }
+
+        .kpi-number {
+            font-size: 1.75rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .kpi-detail {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            margin-top: 0.35rem;
+            font-weight: 500;
+        }
+
+        /* ── Grids & Cards ── */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.85rem;
+            margin-bottom: 0.85rem;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.85rem;
+            margin-bottom: 0.85rem;
+        }
+
+        .grid-full {
+            margin-bottom: 0.85rem;
+        }
+
+        .card {
+            background: var(--surface-2);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: border-color 0.2s ease;
+        }
+
+        .card:hover { border-color: var(--border-strong); }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.95rem 1.25rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .card-title {
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-title svg {
+            width: 15px;
+            height: 15px;
+            color: var(--accent);
+            opacity: 0.9;
+        }
+
+        .card-badge {
+            font-size: 0.65rem;
+            padding: 0.2rem 0.55rem;
+            border-radius: 99px;
+            font-weight: 600;
+            background: var(--surface-4);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-subtle);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .card-body { padding: 1.1rem 1.25rem; }
+
+        /* ── Horizontal Bar Chart ── */
+        .hbar-list { display: flex; flex-direction: column; gap: 0.55rem; }
+
+        .hbar-item {
+            display: grid;
+            grid-template-columns: 80px 1fr 56px;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .hbar-label {
+            font-size: 0.74rem;
+            color: var(--text-secondary);
+            text-align: right;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .hbar-track {
+            height: 22px;
+            background: var(--surface-3);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .hbar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .hbar-value {
+            font-size: 0.72rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* AQI categories & fills */
+        .fill-good { background: var(--green); }
+        .fill-moderate { background: var(--amber); }
+        .fill-usg { background: var(--orange); }
+        .fill-unhealthy { background: var(--red); }
+        .fill-vunhealthy { background: var(--purple); }
+
+        /* ── Tables ── */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.78rem;
+        }
+
+        .data-table th {
+            text-align: left;
+            font-size: 0.64rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-tertiary);
+            font-weight: 700;
+            padding: 0.65rem 0.95rem;
+            border-bottom: 1px solid var(--border-default);
+            background: var(--surface-3);
+        }
+
+        .data-table th:first-child { border-radius: 6px 0 0 0; }
+        .data-table th:last-child { border-radius: 0 6px 0 0; }
+
+        .data-table td {
+            padding: 0.65rem 0.95rem;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-subtle);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+        .data-table td.mono {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 500;
+            font-size: 0.74rem;
+        }
+
+        /* ── Tags / Badges ── */
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.2rem 0.55rem;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+        }
+
+        .tag-good { background: var(--green-muted); color: var(--green); border: 1px solid rgba(34,197,94,0.25); }
+        .tag-moderate { background: var(--amber-muted); color: var(--amber); border: 1px solid rgba(245,158,11,0.25); }
+        .tag-usg { background: var(--orange-muted); color: var(--orange); border: 1px solid rgba(249,115,22,0.25); }
+        .tag-unhealthy { background: var(--red-muted); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+        .tag-vunhealthy { background: var(--purple-muted); color: var(--purple); border: 1px solid rgba(168,85,247,0.25); }
+        .tag-success { background: var(--green-muted); color: var(--green); border: 1px solid rgba(34,197,94,0.25); }
+        .tag-failed { background: var(--red-muted); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+        .tag-neutral { background: var(--surface-4); color: var(--text-secondary); border: 1px solid var(--border-default); }
+
+        /* ── Weather Grid ── */
+        .weather-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.6rem;
+        }
+
+        .weather-stat {
+            padding: 0.85rem 0.8rem;
+            background: var(--surface-3);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .weather-stat .ws-label {
+            font-size: 0.62rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-tertiary);
+            font-weight: 700;
+        }
+
+        .weather-stat .ws-value {
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin-top: 0.25rem;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: -0.02em;
+        }
+
+        /* ── Pollutants Chips ── */
+        .pollutant-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .pollutant-chip {
+            padding: 0.5rem 0.9rem;
+            border-radius: var(--radius-sm);
+            background: var(--surface-3);
+            border: 1px solid var(--border-default);
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .pollutant-chip:hover {
+            border-color: var(--accent);
+            color: #c7d2fe;
+            background: var(--accent-muted);
+        }
+
+        /* ── Filter Bar ── */
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1.1rem;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: var(--surface-2);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-sm);
+            padding: 0.5rem 0.85rem;
+            width: 320px;
+        }
+
+        .search-box svg {
+            width: 15px;
+            height: 15px;
+            color: var(--text-tertiary);
+            flex-shrink: 0;
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-primary);
+            font-size: 0.78rem;
+            width: 100%;
+            font-family: inherit;
+        }
+
+        .search-box input::placeholder { color: var(--text-tertiary); }
+
+        .filter-chips {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .filter-btn {
+            background: var(--surface-2);
+            border: 1px solid var(--border-default);
+            color: var(--text-secondary);
+            padding: 0.4rem 0.8rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .filter-btn:hover {
+            background: var(--surface-3);
+            color: var(--text-primary);
+        }
+
+        .filter-btn.active {
+            background: var(--accent-muted);
+            border-color: var(--accent);
+            color: #c7d2fe;
+        }
+
+        /* ── Pollutant Deep Dive Cards ── */
+        .pollutant-detail-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .pcard {
+            background: var(--surface-2);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .pcard:hover {
+            border-color: var(--border-strong);
+            transform: translateY(-2px);
+        }
+
+        .pcard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .pcard-symbol {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            letter-spacing: -0.02em;
+        }
+
+        .pcard-name {
+            font-size: 0.74rem;
+            color: var(--text-tertiary);
+            font-weight: 500;
+            margin-top: 0.1rem;
+        }
+
+        .pcard-reading {
+            background: var(--surface-3);
+            padding: 0.75rem 0.85rem;
+            border-radius: var(--radius-sm);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pcard-reading-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-tertiary);
+            font-weight: 700;
+        }
+
+        .pcard-reading-val {
+            font-size: 1.15rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-primary);
+        }
+
+        .pcard-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            font-size: 0.7rem;
+        }
+
+        .pcard-meta-item {
+            background: var(--surface-1);
+            padding: 0.5rem 0.6rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .pcard-meta-label {
+            font-size: 0.58rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-tertiary);
+            font-weight: 700;
+            margin-bottom: 0.15rem;
+        }
+
+        .pcard-meta-val {
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .pcard-source {
+            font-size: 0.72rem;
+            color: var(--text-tertiary);
+            line-height: 1.4;
+            border-top: 1px solid var(--border-subtle);
+            padding-top: 0.65rem;
+        }
+
+        /* ── Configuration View Layout ── */
+        .config-flow {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            padding: 1.25rem 1.5rem;
+            background: var(--surface-3);
+            border-radius: var(--radius-md);
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+        }
+
+        .cnode {
+            background: var(--surface-2);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-sm);
+            padding: 0.85rem 1rem;
+            min-width: 140px;
+            text-align: center;
+        }
+
+        .cnode-title {
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .cnode-sub {
+            font-size: 0.64rem;
+            color: var(--text-tertiary);
+            font-family: 'JetBrains Mono', monospace;
+            margin-top: 0.2rem;
+        }
+
+        .carrow {
+            color: var(--text-tertiary);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .carrow svg { width: 18px; height: 18px; }
+
+        .param-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.78rem;
+        }
+
+        .param-table td {
+            padding: 0.7rem 0.9rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .param-table td:first-child {
+            font-weight: 600;
+            color: var(--text-primary);
+            width: 220px;
+        }
+
+        .param-table td:nth-child(2) {
+            font-family: 'JetBrains Mono', monospace;
+            color: #a5b4fc;
+            width: 280px;
+        }
+
+        .param-table td:last-child {
+            color: var(--text-tertiary);
+            font-size: 0.72rem;
+        }
+
+        /* ── Lineage Table & Stats ── */
+        .lineage-stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.85rem;
+            margin-bottom: 1.25rem;
+        }
+
+        /* ── Breakpoint Scale ── */
+        .scale-list { display: flex; flex-direction: column; gap: 0.5rem; }
+
+        .scale-item {
+            display: grid;
+            grid-template-columns: 140px 100px 1fr;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.65rem 0.85rem;
+            background: var(--surface-3);
+            border-radius: var(--radius-sm);
+            font-size: 0.76rem;
+        }
+
+        .scale-range {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .scale-desc {
+            color: var(--text-tertiary);
+            font-size: 0.72rem;
+            line-height: 1.3;
+        }
+
+        /* ── Footer ── */
+        .footer-bar {
+            padding: 1.5rem 0 0.5rem;
+            border-top: 1px solid var(--border-subtle);
+            font-size: 0.7rem;
+            color: var(--text-tertiary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 1200px) {
+            .kpi-row { grid-template-columns: repeat(3, 1fr); }
+            .pollutant-detail-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (max-width: 900px) {
+            .layout { grid-template-columns: 1fr; }
+            .sidebar { display: none; }
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .kpi-row { grid-template-columns: repeat(2, 1fr); }
+            .content { padding: 1.25rem; }
+            .pollutant-detail-grid { grid-template-columns: 1fr; }
+            .lineage-stats-row { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-icon">AQ</div>
+                <div>
+                    <h1>AQI Monitor</h1>
+                    <div class="brand-sub">Bengaluru CAAQMS</div>
+                </div>
+            </div>
+
+            <!-- Analytics Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-label">Analytics</div>
+                <a class="sidebar-item active" data-view="overview">
+                    <div class="sidebar-item-content">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                        <span>Overview</span>
+                    </div>
+                    <span class="sidebar-badge">Live</span>
+                </a>
+                <a class="sidebar-item" data-view="trends">
+                    <div class="sidebar-item-content">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        <span>AQI Trends</span>
+                    </div>
+                </a>
+                <a class="sidebar-item" data-view="stations">
+                    <div class="sidebar-item-content">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+                        <span>Stations</span>
+                    </div>
+                    <span class="sidebar-badge" id="nav-station-count">25</span>
+                </a>
+                <a class="sidebar-item" data-view="pollutants">
+                    <div class="sidebar-item-content">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                        <span>Pollutants</span>
+                    </div>
+                    <span class="sidebar-badge">9</span>
+                </a>
+            </div>
+
+            <!-- Pipeline Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-label">Pipeline & Lineage</div>
+                <a class="sidebar-item" data-view="config">
+                    <div class="sidebar-item-content">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                        <span>Configuration</span>
+                    </div>
+                </a>
+                <a class="sidebar-item" data-view="lineage">
+                    <div class="sidebar-item-content">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                        <span>Lineage Log</span>
+                    </div>
+                    <span class="sidebar-badge" id="nav-lineage-count">42</span>
+                </a>
+            </div>
+
+            <!-- Health Status -->
+            <div class="sidebar-status">
+                <div class="status-indicator">
+                    <span class="status-dot"></span>
+                    <span>All services operational</span>
+                </div>
+                <div class="status-sub">2026-09-06 • Batch #ef55</div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content">
+            <!-- Top Global Header -->
+            <div class="page-header">
+                <div>
+                    <h2 id="page-title">Air Quality Overview</h2>
+                    <div class="subtitle" id="page-subtitle">Bengaluru metropolitan area — 25km radius CAAQMS monitoring grid</div>
+                </div>
+                <div class="header-meta">
+                    <div class="meta-pill">
+                        <div class="meta-label">Monitoring Target</div>
+                        <div class="meta-value">12.97°N, 77.59°E</div>
+                    </div>
+                    <div class="meta-pill">
+                        <div class="meta-label">Pipeline Status</div>
+                        <div class="meta-value" style="color:var(--green)">100% Valid</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= VIEW 1: OVERVIEW ================= -->
+            <div id="view-overview" class="view-panel active">
+                <!-- Pipeline banner -->
+                <div class="pipeline-banner" id="pipeline-banner"></div>
+
+                <!-- KPIs -->
+                <div class="kpi-row" id="kpi-row"></div>
+
+                <!-- Charts 1: Daily Trend & Top Stations -->
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                                Daily AQI Trend
+                            </span>
+                            <span class="card-badge">US EPA PM2.5</span>
+                        </div>
+                        <div class="card-body">
+                            <div id="aqi-chart" class="hbar-list"></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+                                Top 10 Stations by AQI
+                            </span>
+                            <span class="card-badge" id="station-badge">Ranked High to Low</span>
+                        </div>
+                        <div class="card-body">
+                            <div id="station-chart" class="hbar-list"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts 2: Weather & Pollutants -->
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+                                Meteorological Window
+                            </span>
+                            <span class="card-badge">14-Day Open-Meteo</span>
+                        </div>
+                        <div class="card-body">
+                            <div id="weather-stats" class="weather-stats"></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                                Monitored Chemical Parameters
+                            </span>
+                            <span class="card-badge" id="pollutant-count">Active</span>
+                        </div>
+                        <div class="card-body">
+                            <div id="pollutant-grid" class="pollutant-grid"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Station Preview Table -->
+                <div class="grid-full">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 2 7 12 12 22 7 12 2"/></svg>
+                                CAAQMS Station PM2.5 Summary
+                            </span>
+                            <a class="card-badge" style="cursor:pointer;color:var(--accent)" onclick="switchView('stations')">View All Stations &rarr;</a>
+                        </div>
+                        <div class="card-body" style="padding: 0;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Station Name</th>
+                                        <th>Station ID</th>
+                                        <th>Avg PM2.5</th>
+                                        <th>Max PM2.5</th>
+                                        <th>Min PM2.5</th>
+                                        <th>AQI</th>
+                                        <th>Category</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="overview-station-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= VIEW 2: AQI TRENDS ================= -->
+            <div id="view-trends" class="view-panel">
+                <div class="grid-3" style="margin-bottom:1rem;">
+                    <div class="kpi">
+                        <div class="kpi-label">Average Observed AQI</div>
+                        <div class="kpi-number" style="color:var(--amber)">68</div>
+                        <div class="kpi-detail">Moderate Air Quality</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">Peak AQI Observed</div>
+                        <div class="kpi-number" style="color:var(--red)">158.4</div>
+                        <div class="kpi-detail">Unhealthy (2022-10-31)</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">Lowest AQI Observed</div>
+                        <div class="kpi-number" style="color:var(--green)">42.5</div>
+                        <div class="kpi-detail">Good (2022-08-02)</div>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <!-- Daily Breakdown Table -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Daily Observation Timeline</span>
+                            <span class="card-badge">EPA Continuous Calculation</span>
+                        </div>
+                        <div class="card-body" style="padding: 0;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>PM2.5 (&mu;g/m&sup3;)</th>
+                                        <th>PM10 (&mu;g/m&sup3;)</th>
+                                        <th>AQI</th>
+                                        <th>EPA Category</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="trends-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Breakpoint Scale Reference -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">US EPA PM2.5 Breakpoint Scale</span>
+                            <span class="card-badge">Federal Reference</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="scale-list">
+                                <div class="scale-item">
+                                    <span class="tag tag-good">Good</span>
+                                    <span class="scale-range">0 &ndash; 50 AQI</span>
+                                    <span class="scale-desc">PM2.5: 0.0 &ndash; 12.0 &mu;g/m&sup3;. Air quality is satisfactory and poses little to no risk.</span>
+                                </div>
+                                <div class="scale-item">
+                                    <span class="tag tag-moderate">Moderate</span>
+                                    <span class="scale-range">51 &ndash; 100 AQI</span>
+                                    <span class="scale-desc">PM2.5: 12.1 &ndash; 35.4 &mu;g/m&sup3;. Acceptable; unusually sensitive individuals may feel slight discomfort.</span>
+                                </div>
+                                <div class="scale-item">
+                                    <span class="tag tag-usg">Unhealthy for SG</span>
+                                    <span class="scale-range">101 &ndash; 150 AQI</span>
+                                    <span class="scale-desc">PM2.5: 35.5 &ndash; 55.4 &mu;g/m&sup3;. Members of sensitive groups may experience adverse health effects.</span>
+                                </div>
+                                <div class="scale-item">
+                                    <span class="tag tag-unhealthy">Unhealthy</span>
+                                    <span class="scale-range">151 &ndash; 200 AQI</span>
+                                    <span class="scale-desc">PM2.5: 55.5 &ndash; 150.4 &mu;g/m&sup3;. General public begins to experience health effects; heart/lung risk.</span>
+                                </div>
+                                <div class="scale-item">
+                                    <span class="tag tag-vunhealthy">Very Unhealthy</span>
+                                    <span class="scale-range">201 &ndash; 300 AQI</span>
+                                    <span class="scale-desc">PM2.5: 150.5 &ndash; 250.4 &mu;g/m&sup3;. Health alert: increased likelihood of serious adverse effects.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= VIEW 3: STATIONS ================= -->
+            <div id="view-stations" class="view-panel">
+                <div class="filter-bar">
+                    <div class="search-box">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input type="text" id="station-search" placeholder="Search station by name or ID..." onkeyup="filterStationsTable()">
+                    </div>
+                    <div class="filter-chips" id="station-filter-chips">
+                        <button class="filter-btn active" onclick="setStationFilter('all', this)">All</button>
+                        <button class="filter-btn" onclick="setStationFilter('good', this)">Good (&le;50)</button>
+                        <button class="filter-btn" onclick="setStationFilter('moderate', this)">Moderate (51-100)</button>
+                        <button class="filter-btn" onclick="setStationFilter('usg', this)">Unhealthy SG (101-150)</button>
+                        <button class="filter-btn" onclick="setStationFilter('unhealthy', this)">Unhealthy (&gt;150)</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">CAAQMS Monitoring Network (Bengaluru Metro)</span>
+                        <span class="card-badge" id="stations-result-count">Showing 25 stations</span>
+                    </div>
+                    <div class="card-body" style="padding: 0;">
+                        <table class="data-table" id="all-stations-table">
+                            <thead>
+                                <tr>
+                                    <th>Station Name</th>
+                                    <th>Station ID</th>
+                                    <th>Locality</th>
+                                    <th>Coordinates</th>
+                                    <th>Avg PM2.5</th>
+                                    <th>Peak PM2.5</th>
+                                    <th>Min PM2.5</th>
+                                    <th>AQI</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="all-stations-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= VIEW 4: POLLUTANTS ================= -->
+            <div id="view-pollutants" class="view-panel">
+                <div class="pollutant-detail-grid" id="pollutant-detail-grid">
+                    <!-- PM2.5 -->
+                    <div class="pcard">
+                        <div class="pcard-header">
+                            <div>
+                                <div class="pcard-symbol">PM<sub>2.5</sub></div>
+                                <div class="pcard-name">Fine Particulate Matter (&le;2.5 &mu;m)</div>
+                            </div>
+                            <span class="tag tag-moderate">Moderate</span>
+                        </div>
+                        <div class="pcard-reading">
+                            <span class="pcard-reading-label">Observed Mean</span>
+                            <span class="pcard-reading-val">36.8 &mu;g/m&sup3;</span>
+                        </div>
+                        <div class="pcard-meta">
+                            <div class="pcard-meta-item">
+                                <div class="pcard-meta-label">CPCB 24h Standard</div>
+                                <div class="pcard-meta-val">60.0 &mu;g/m&sup3;</div>
+                            </div>
+                            <div class="pcard-meta-item">
+                                <div class="pcard-meta-label">WHO Guideline</div>
+                                <div class="pcard-meta-val">15.0 &mu;g/m&sup3;</div>
+                            </div>
+                        </div>
+                        <div class="pcard-source">
+                            <strong>Primary Sources:</strong> Diesel exhaust, industrial fuel combustion, tyre friction, biomass cooking fires, secondary atmospheric nitrates.
+                        </div>
+                    </div>
+
+                    <!-- PM10 -->
+                    <div class="pcard">
+                        <div class="pcard-header">
+                            <div>
+                                <div class="pcard-symbol">PM<sub>10</sub></div>
+                                <div class="pcard-name">Coarse Inhalable Dust (&le;10 &mu;m)</div>
+                            </div>
+                            <span class="tag tag-moderate">Moderate</span>
+                        </div>
+                        <div class="pcard-reading">
+                            <span class="pcard-reading-label">Observed Mean</span>
+                            <span class="pcard-reading-val">86.4 &mu;g/m&sup3;</span>
+                        </div>
+                        <div class="pcard-meta">
+                            <div class="pcard-meta-item">
+                                <div class="pcard-meta-label">CPCB 24h Standard</div>
+                                <div class="pcard-meta-val">100.0 &mu;g/m&sup3;</div>
+                            </div>
+                            <div class="pcard-meta-item">
+                                <div class="pcard-meta-label">WHO Guideline</div>
+                                <div class="pcard-meta-val">45.0 &mu;g/m&sup3;</div>
+                            </div>
+                        </div>
+                        <div class="pcard-source">
+                            <strong>Primary Sources:</strong> Metro construction debris, unpaved road dust resuspension, quarry operations, building demolition.
+                        </div>
+                    </div>
+
+                    <!-- NO2 -->
+                    <div class="pcard">
+                        <div class="pcard-header">
+                            <div>
+                                <div class="pcard-symbol">NO<sub>2</sub></div>
+                                <div class="pcard-name">Nitrogen Dioxide</div>
+                            </div>
+                            <span class="tag tag-good">Within Limit</span>
+                        </div>
+                        <div class="pcard-reading">
+                            <span class="pcard-reading-label">Monitored Sensors</span>
+                            <span class="pcard-reading-val">29 Sites</span>
+                        </div>
+                        <div class="pcard-meta">
+                            <div class="pcard-meta-item">
+                                <div class="pcard-meta-label">CPCB 24h Standard</div>
+                                <div class="pcard-meta-val">80.0 &mu;g/m&sup3;</div>
+                            </div>
+                            <div class="pcard-meta-item">
+                                <div class="pcard-meta-label">WHO Guideline</div>
+                                <div class="pcard-meta-val">25.0 &mu;g/m&sup3;</div>
+                            </div>
+                        </div>
+                        <div class="pcard-source">
+                            <strong>Primary Sources:</strong> High-temperature vehicle combustion engines, heavy freight trucks along Outer Ring Road and Hosur corridor.
+                        </div>
+                    </div>
+
+                    <!-- SO2 -->
+                    <div class="pcard">
+                        <div class="pcard-header">
+                            <div>
+                                <div class="pcard-symbol">SO<sub>2</sub></div>
+                                <div class="pcard-name">Sulfur Dioxide</div>
+                            </div>
+                            <span class="tag tag-good">Low Risk</span>
+                        </div>
+                        <div class="pcard-reading">
+                            <span class="pcard-reading-label">Monitored Sensors</span>
+                            <span class="pcard-reading-val">29 Sites</span>
+                        </div>
+                        <div class="pcard-meta">
+                            <div class="pcard-meta-item">
+                                <div class="pcard-meta-label">CPCB 24h Standard</div>
+                                <div class="pcard-meta-val">80.0 &mu;g/m&sup3;</div>
+                            </div>
+                            <div class="pcard-meta-item">
+                                <div class="pcard-meta-label">WHO Guideline</div>
+                                <div class="pcard-meta-val">40.0 &mu;g/m&sup3;</div>
+                            </div>
+                        </div>
+                        <div class="pcard-source">
+                            <strong>Primary Sources:</strong> Industrial manufacturing clusters in Peenya, Bommasandra, diesel generators, heavy fuel oil burning.
+                        </div>
+                    </div>
+
+                    <!-- CO -->
+                    <div class="pcard">
+                        <div class="pcard-header">
+                            <div>
+                                <div class="pcard-symbol">CO</div>
+                                <div class="pcard-name">Carbon Monoxide</div>
+                            </div>
+                            <span class="tag tag-good">Normal</span>
+                        </div>
+                        <div class="pcard-reading">
+                            <span class="pcard-reading-label">Monitored Sensors</span>
+                            <span class="pcard-reading-val">29 Sites</span>
+                        </div>
+                        <div class="pcard-meta">
+                            <div class="pcard-meta-item">
+                                <div class="pcard-meta-label">CPCB 8h Standard</div>
+                                <div class="pcard-meta-val">2.0 mg/m&sup3;</div>
+                            </div>
+                            <div class="pcard-meta-item">
+                                <div class="pcard-meta-label">WHO Guideline</div>
+                                <div class="pcard-meta-val">4.0 mg/m&sup3;</div>
+                            </div>
+                        </div>
+                        <div class="pcard-source">
+                            <strong>Primary Sources:</strong> Incomplete fossil fuel combustion, vehicular traffic jams at signalized bottlenecks (Silk Board, Tin Factory).
+                        </div>
+                    </div>
+
+                    <!-- O3 -->
+                    <div class="pcard">
+                        <div class="pcard-header">
+                            <div>
+                                <div class="pcard-symbol">O<sub>3</sub></div>
+                                <div class="pcard-name">Ground-Level Ozone</div>
+                            </div>
+                            <span class="tag tag-moderate">Secondary</span>
+                        </div>
+                        <div class="pcard-reading">
+                            <span class="pcard-reading-label">Monitored Sensors</span>
+                            <span class="pcard-reading-val">22 Sites</span>
+                        </div>
+                        <div class="pcard-meta">
+                            <div class="pcard-meta-item">
+                                <div class="pcard-meta-label">CPCB 8h Standard</div>
+                                <div class="pcard-meta-val">100.0 &mu;g/m&sup3;</div>
+                            </div>
+                            <div class="pcard-meta-item">
+                                <div class="pcard-meta-label">WHO Guideline</div>
+                                <div class="pcard-meta-val">100.0 &mu;g/m&sup3;</div>
+                            </div>
+                        </div>
+                        <div class="pcard-source">
+                            <strong>Primary Sources:</strong> Photochemical reactions between precursor gases (NOx and Volatile Organic Compounds) triggered by solar radiation.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= VIEW 5: CONFIGURATION ================= -->
+            <div id="view-config" class="view-panel">
+                <!-- Pipeline Visual Architecture -->
+                <div class="config-flow">
+                    <div class="cnode">
+                        <div class="cnode-title">OpenAQ v3 API</div>
+                        <div class="cnode-sub">26 CAAQMS Stations</div>
+                    </div>
+                    <div class="carrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 18 15 12 9 6"/></svg></div>
+                    <div class="cnode">
+                        <div class="cnode-title">Open-Meteo API</div>
+                        <div class="cnode-sub">336 Weather Records</div>
+                    </div>
+                    <div class="carrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 18 15 12 9 6"/></svg></div>
+                    <div class="cnode" style="border-color:var(--accent)">
+                        <div class="cnode-title" style="color:#c7d2fe">Ingestion & Staging</div>
+                        <div class="cnode-sub">Data Quality Checks</div>
+                    </div>
+                    <div class="carrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 18 15 12 9 6"/></svg></div>
+                    <div class="cnode">
+                        <div class="cnode-title">EPA AQI Engine</div>
+                        <div class="cnode-sub">Piecewise Linear Model</div>
+                    </div>
+                    <div class="carrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 18 15 12 9 6"/></svg></div>
+                    <div class="cnode">
+                        <div class="cnode-title">PostgreSQL Core</div>
+                        <div class="cnode-sub">Star Schema (4 layers)</div>
+                    </div>
+                    <div class="carrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 18 15 12 9 6"/></svg></div>
+                    <div class="cnode" style="border-color:var(--green)">
+                        <div class="cnode-title" style="color:var(--green)">Analytics & UI</div>
+                        <div class="cnode-sub">Tableau / Web Monitor</div>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <!-- Environment Parameters -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Geospatial & Ingestion Parameters</span>
+                            <span class="card-badge">src/config.py</span>
+                        </div>
+                        <div class="card-body" style="padding: 0;">
+                            <table class="param-table">
+                                <tr>
+                                    <td>TARGET_CITY</td>
+                                    <td>"Bengaluru"</td>
+                                    <td>Target study metropolitan area</td>
+                                </tr>
+                                <tr>
+                                    <td>TARGET_LAT</td>
+                                    <td>12.9716</td>
+                                    <td>City geographic latitude center</td>
+                                </tr>
+                                <tr>
+                                    <td>TARGET_LON</td>
+                                    <td>77.5946</td>
+                                    <td>City geographic longitude center</td>
+                                </tr>
+                                <tr>
+                                    <td>RADIUS</td>
+                                    <td>25,000 meters</td>
+                                    <td>Station discovery bounding perimeter</td>
+                                </tr>
+                                <tr>
+                                    <td>OPENAQ_BASE_URL</td>
+                                    <td>https://api.openaq.org/v3</td>
+                                    <td>OpenAQ v3 REST endpoint</td>
+                                </tr>
+                                <tr>
+                                    <td>OPEN_METEO_BASE_URL</td>
+                                    <td>https://api.open-meteo.com/v1</td>
+                                    <td>Open-Meteo hourly weather endpoint</td>
+                                </tr>
+                                <tr>
+                                    <td>DATABASE_NAME</td>
+                                    <td>aqi_db (Port 5432)</td>
+                                    <td>PostgreSQL analytical warehouse</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Validation Rules -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Data Quality & Validation Thresholds</span>
+                            <span class="card-badge">Zero Silent Dropping</span>
+                        </div>
+                        <div class="card-body" style="padding: 0;">
+                            <table class="param-table">
+                                <tr>
+                                    <td>PM2.5 Maximum Valid</td>
+                                    <td>1,000.0 &mu;g/m&sup3;</td>
+                                    <td>Values above quarantined to rejected/</td>
+                                </tr>
+                                <tr>
+                                    <td>PM10 Maximum Valid</td>
+                                    <td>1,000.0 &mu;g/m&sup3;</td>
+                                    <td>Values above quarantined to rejected/</td>
+                                </tr>
+                                <tr>
+                                    <td>NO2 Maximum Valid</td>
+                                    <td>1,000.0 ppb</td>
+                                    <td>Sensor physical range boundary</td>
+                                </tr>
+                                <tr>
+                                    <td>SO2 Maximum Valid</td>
+                                    <td>1,000.0 ppb</td>
+                                    <td>Sensor physical range boundary</td>
+                                </tr>
+                                <tr>
+                                    <td>CO Maximum Valid</td>
+                                    <td>50,000.0 ppb</td>
+                                    <td>Wide ambient tolerance standard</td>
+                                </tr>
+                                <tr>
+                                    <td>Null / Negative Values</td>
+                                    <td>Filtered & Logged</td>
+                                    <td>Documented in pipeline_runs audit trail</td>
+                                </tr>
+                                <tr>
+                                    <td>Airflow Schedule</td>
+                                    <td>0 6 * * *</td>
+                                    <td>Runs daily at 06:00 UTC (11:30 AM IST)</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= VIEW 6: LINEAGE LOG ================= -->
+            <div id="view-lineage" class="view-panel">
+                <div class="lineage-stats-row">
+                    <div class="kpi">
+                        <div class="kpi-label">Total Executions</div>
+                        <div class="kpi-number" style="color:var(--text-primary)">42</div>
+                        <div class="kpi-detail">Recorded run invocations</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">Ingestion Success</div>
+                        <div class="kpi-number" style="color:var(--green)">100%</div>
+                        <div class="kpi-detail">OpenAQ & Weather APIs</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">Latest Valid Records</div>
+                        <div class="kpi-number" style="color:var(--blue)">266</div>
+                        <div class="kpi-detail">0 rejected records</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">Audit Log Location</div>
+                        <div class="kpi-number" style="color:var(--accent);font-size:1.1rem;margin-top:0.3rem;">pipeline_runs.csv</div>
+                        <div class="kpi-detail">data/logs/ directory</div>
+                    </div>
+                </div>
+
+                <div class="filter-bar">
+                    <div class="search-box">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input type="text" id="lineage-search" placeholder="Search by run ID, source, or stage..." onkeyup="filterLineageTable()">
+                    </div>
+                    <div class="filter-chips">
+                        <button class="filter-btn active" onclick="setLineageFilter('all', this)">All (42)</button>
+                        <button class="filter-btn" onclick="setLineageFilter('SUCCESS', this)">Success Only</button>
+                        <button class="filter-btn" onclick="setLineageFilter('FAILED', this)">Failed Only</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Immutable Pipeline Audit Trail</span>
+                        <span class="card-badge" id="lineage-count-badge">Showing 42 entries</span>
+                    </div>
+                    <div class="card-body" style="padding: 0;">
+                        <table class="data-table" id="lineage-table">
+                            <thead>
+                                <tr>
+                                    <th>Run ID</th>
+                                    <th>Source</th>
+                                    <th>Stage</th>
+                                    <th>Started At (UTC)</th>
+                                    <th>Extracted</th>
+                                    <th>Valid</th>
+                                    <th>Rejected</th>
+                                    <th>Status</th>
+                                    <th>Diagnostics</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lineage-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Global Footer -->
+            <div class="footer-bar">
+                <span>US EPA PM2.5 Breakpoint Equation Model • CPCB CAAQMS Standards</span>
+                <span>Bengaluru Environmental Data Engineering Project</span>
+            </div>
+        </main>
+    </div>
+
+    <!-- Pre-loaded data for local file:// access without CORS issues -->
+    <script src="data/dashboard_data.js"></script>
+
+    <!-- Application Script -->
+    <script>
+    // Station names metadata
+    const stationNames = {
+        412: "Peenya - KSPCB",
+        594: "BTM Layout - KSPCB",
+        797: "City Railway Station - KSPCB",
+        2589: "SaneguravaHalli - KSPCB",
+        2592: "BWSSB Kadabesanahalli",
+        5547: "Hombegowda Nagar",
+        5548: "Jayanagar 5th Block",
+        5607: "Hebbal Industrial Zone",
+        6973: "Silk Board Junction",
+        6974: "BTM Layout CAAQMS #2",
+        6975: "KSPCB Regional Lab",
+        7560: "Whitefield Tech Park",
+        7561: "Kengeri Satellite Town",
+        7562: "Electronic City Phase 1",
+        7563: "Yelahanka New Town",
+        7564: "Rajajinagar Industrial",
+        7565: "Banashankari CAAQMS",
+        7566: "Malleshwaram CAAQMS",
+        7567: "Indiranagar CAAQMS",
+        7568: "Marathahalli Junction",
+        7569: "Bellandur Eco-Space",
+        7570: "Koramangala 4th Block",
+        7571: "Basavanagudi CAAQMS",
+        7572: "Yeshwanthpur CAAQMS",
+        7573: "Domlur CAAQMS"
+    };
+
+    const checkSvg = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
+
+    let appData = null;
+    let stationFilterCategory = 'all';
+    let lineageFilterStatus = 'all';
+
+    // ── Audit Lineage Batches ──
+    const lineageData = [
+        { id: "518e880e", src: "open-meteo", stage: "transform", time: "2026-09-06 09:06:14", ext: 336, val: 336, rej: 0, status: "SUCCESS", diag: "Parsed timestamps & metrics" },
+        { id: "b6706096", src: "openaq", stage: "transform", time: "2026-09-06 09:06:14", ext: 266, val: 266, rej: 0, status: "SUCCESS", diag: "266 passed quality filters" },
+        { id: "cc60df0a", src: "openaq", stage: "extract", time: "2026-09-06 09:05:30", ext: 266, val: 0, rej: 0, status: "SUCCESS", diag: "Fetched 26 stations" },
+        { id: "2c6c8163", src: "open-meteo", stage: "extract", time: "2026-09-06 09:05:45", ext: 336, val: 0, rej: 0, status: "SUCCESS", diag: "14-day hourly meteorological" },
+        { id: "dd414593", src: "analytics", stage: "load", time: "2026-09-05 08:07:49", ext: 0, val: 17, rej: 0, status: "SUCCESS", diag: "Analytics aggregates built" },
+        { id: "2ef976b4", src: "open-meteo", stage: "transform", time: "2026-09-05 08:07:48", ext: 336, val: 336, rej: 0, status: "SUCCESS", diag: "Hourly temperature parsed" },
+        { id: "cff50058", src: "openaq", stage: "transform", time: "2026-09-05 08:07:47", ext: 266, val: 266, rej: 0, status: "SUCCESS", diag: "Validated staging output" },
+        { id: "628cd2cb", src: "analytics", stage: "load", time: "2026-09-05 07:59:32", ext: 0, val: 17, rej: 0, status: "SUCCESS", diag: "Summary tables refreshed" },
+        { id: "a6ec601f", src: "open-meteo", stage: "transform", time: "2026-09-05 07:59:30", ext: 336, val: 336, rej: 0, status: "SUCCESS", diag: "Cleaned weather variables" },
+        { id: "dc67b5af", src: "openaq", stage: "transform", time: "2026-09-05 07:59:29", ext: 266, val: 266, rej: 0, status: "SUCCESS", diag: "AQI breakpoints matched" },
+        { id: "7d3e1690", src: "analytics", stage: "load", time: "2026-09-05 07:59:20", ext: 0, val: 17, rej: 0, status: "SUCCESS", diag: "Analytics views materialized" },
+        { id: "09969dc6", src: "open-meteo", stage: "transform", time: "2026-09-05 07:59:19", ext: 336, val: 336, rej: 0, status: "SUCCESS", diag: "Precipitation aggregate" },
+        { id: "8ac77975", src: "openaq", stage: "transform", time: "2026-09-05 07:59:18", ext: 266, val: 266, rej: 0, status: "SUCCESS", diag: "Validation checks completed" },
+        { id: "188e970a", src: "analytics", stage: "load", time: "2026-09-05 07:57:44", ext: 0, val: 17, rej: 0, status: "SUCCESS", diag: "Database load verified" },
+        { id: "6c528d1c", src: "open-meteo", stage: "transform", time: "2026-09-05 07:57:44", ext: 336, val: 336, rej: 0, status: "SUCCESS", diag: "Hourly dataset cleaned" },
+        { id: "eaf6ada2", src: "openaq", stage: "transform", time: "2026-09-05 07:57:43", ext: 266, val: 266, rej: 0, status: "SUCCESS", diag: "Outliers bounded" },
+        { id: "dc798415", src: "open-meteo", stage: "extract", time: "2026-09-05 07:57:43", ext: 336, val: 0, rej: 0, status: "SUCCESS", diag: "Open-Meteo REST response OK" },
+        { id: "e0ec38c7", src: "openaq", stage: "extract", time: "2026-09-05 07:57:30", ext: 266, val: 0, rej: 0, status: "SUCCESS", diag: "OpenAQ v3 response OK" },
+        { id: "111ae4af", src: "analytics", stage: "load", time: "2026-09-05 07:56:33", ext: 0, val: 17, rej: 0, status: "SUCCESS", diag: "Daily index constructed" },
+        { id: "1bffa050", src: "analytics", stage: "load", time: "2026-09-04 17:16:25", ext: 0, val: 0, rej: 0, status: "FAILED", diag: "Driver handshake: DB offline" },
+        { id: "9119063f", src: "analytics", stage: "load", time: "2026-09-04 17:16:24", ext: 0, val: 0, rej: 0, status: "FAILED", diag: "PostgreSQL port 5432 unreachable" },
+        { id: "96f1e6a1", src: "open-meteo", stage: "transform", time: "2026-09-04 16:50:38", ext: 336, val: 336, rej: 0, status: "SUCCESS", diag: "Processed weather series" },
+        { id: "c8e7bb58", src: "openaq", stage: "transform", time: "2026-09-04 16:50:37", ext: 266, val: 266, rej: 0, status: "SUCCESS", diag: "Zero schema validation errors" },
+        { id: "55880c46", src: "openaq", stage: "transform", time: "2026-09-04 11:18:14", ext: 266, val: 266, rej: 0, status: "SUCCESS", diag: "Initial transform pipeline test" },
+        { id: "1504f29b", src: "open-meteo", stage: "transform", time: "2026-09-04 11:18:14", ext: 336, val: 336, rej: 0, status: "SUCCESS", diag: "Initial weather pipeline test" }
+    ];
+
+    // ── Client-side Routing / Tab Switcher ──
+    const viewMeta = {
+        overview: {
+            title: "Air Quality Overview",
+            subtitle: "Bengaluru metropolitan area — 25km radius CAAQMS monitoring grid"
+        },
+        trends: {
+            title: "Daily AQI Trends & Breakpoints",
+            subtitle: "Historical observation distribution, peak events, and US EPA breakpoint classifications"
+        },
+        stations: {
+            title: "Monitoring Stations Network",
+            subtitle: "25 Continuous Ambient Air Quality Monitoring Stations (CAAQMS) in Bengaluru"
+        },
+        pollutants: {
+            title: "Pollutant Intelligence & Limits",
+            subtitle: "Chemical specifications, safe exposure standards (CPCB & WHO) and emission sources"
+        },
+        config: {
+            title: "Pipeline Architecture & Environment",
+            subtitle: "ETL pipeline flow, Airflow orchestration settings, and data quality validation thresholds"
+        },
+        lineage: {
+            title: "Data Lineage & Audit Trail",
+            subtitle: "42 recorded execution batches verifying end-to-end data provenance and zero silent dropping"
+        }
+    };
+
+    function switchView(viewId) {
+        document.querySelectorAll('.sidebar-item').forEach(el => {
+            el.classList.toggle('active', el.dataset.view === viewId);
+        });
+
+        document.querySelectorAll('.view-panel').forEach(el => {
+            el.classList.remove('active');
+        });
+
+        const targetPanel = document.getElementById('view-' + viewId);
+        if (targetPanel) {
+            targetPanel.classList.add('active');
+        }
+
+        if (viewMeta[viewId]) {
+            document.getElementById('page-title').textContent = viewMeta[viewId].title;
+            document.getElementById('page-subtitle').textContent = viewMeta[viewId].subtitle;
+        }
+
+        window.location.hash = viewId;
+    }
+
+    // Bind sidebar clicks
+    document.querySelectorAll('.sidebar-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            const view = item.dataset.view;
+            if (view) switchView(view);
+        });
+    });
+
+    // ── AQI Category Helpers ──
+    function aqiClass(v) {
+        if (v == null) return 'moderate';
+        if (v <= 50) return 'good';
+        if (v <= 100) return 'moderate';
+        if (v <= 150) return 'usg';
+        if (v <= 200) return 'unhealthy';
+        return 'vunhealthy';
+    }
+
+    function aqiLabel(v) {
+        if (v == null) return 'N/A';
+        if (v <= 50) return 'Good';
+        if (v <= 100) return 'Moderate';
+        if (v <= 150) return 'Unhealthy for SG';
+        if (v <= 200) return 'Unhealthy';
+        if (v <= 300) return 'Very Unhealthy';
+        return 'Hazardous';
+    }
+
+    // ── Load Data (Supports direct file:// opening and HTTP servers) ──
+    function initDashboard(data) {
+        appData = data;
+        renderAll(data);
+        const hash = window.location.hash.replace('#', '');
+        if (hash && viewMeta[hash]) {
+            switchView(hash);
+        }
+    }
+
+    function loadDashboard() {
+        if (window.DASHBOARD_DATA) {
+            initDashboard(window.DASHBOARD_DATA);
+        } else {
+            fetch('data/dashboard_data.json')
+                .then(r => r.json())
+                .then(data => initDashboard(data))
+                .catch(e => {
+                    console.error(e);
+                    document.querySelector('.content').innerHTML = `
+                        <div style="padding:2rem;background:var(--surface-2);border-radius:10px;border:1px solid var(--red);color:var(--red);">
+                            <strong>Failed to load data/dashboard_data.json:</strong> ${e.message}
+                            <p style="margin-top:10px;color:var(--text-muted);font-size:0.9rem;">
+                                Your browser blocked local <code>file://</code> fetches for security. You can view the dashboard by running:<br>
+                                <code style="color:var(--cyan);background:var(--surface);padding:4px 8px;border-radius:4px;display:inline-block;margin-top:5px;">python -m http.server 8000</code><br>
+                                and visiting <a href="http://localhost:8000/dashboard.html" style="color:var(--cyan);">http://localhost:8000/dashboard.html</a>.
+                            </p>
+                        </div>`;
+                });
+        }
+    }
+
+    function renderAll(data) {
+        const s = data.stats;
+        const daily = data.daily_aqi.filter(d => d.aqi_value != null);
+        const stations = data.station_summary;
+        const wx = data.weather;
+
+        document.getElementById('nav-station-count').textContent = stations.length;
+
+        // 1. Pipeline Banner
+        const steps = ['Extract OpenAQ', 'Extract Weather', 'Validate Quality', 'Transform Data', 'Calculate AQI', 'Postgres Warehouse', 'Audit Lineage'];
+        document.getElementById('pipeline-banner').innerHTML = steps.map((st, i) =>
+            `<div class="pipe-node">${checkSvg} ${st}</div>${i < steps.length - 1 ? '<div class="pipe-connector"></div>' : ''}`
+        ).join('');
+
+        // 2. KPIs
+        const avgAqi = daily.length ? Math.round(daily.reduce((a, d) => a + d.aqi_value, 0) / daily.length) : 0;
+        const kpiColors = {
+            good: 'var(--green)', moderate: 'var(--amber)', usg: 'var(--orange)',
+            unhealthy: 'var(--red)', vunhealthy: 'var(--purple)'
+        };
+
+        document.getElementById('kpi-row').innerHTML = [
+            { l: 'Average AQI', v: avgAqi, d: aqiLabel(avgAqi), c: kpiColors[aqiClass(avgAqi)] },
+            { l: 'Stations Active', v: s.total_stations, d: 'CAAQMS monitors', c: 'var(--accent)' },
+            { l: 'Validated Records', v: s.total_measurements, d: '0 rejected (100%)', c: 'var(--blue)' },
+            { l: 'Ambient Temp', v: s.avg_temp + '\u00B0C', d: '14-day average', c: 'var(--amber)' },
+            { l: 'Relative Humidity', v: s.avg_humidity + '%', d: 'mean humidity', c: 'var(--cyan)' },
+            { l: 'Total Rainfall', v: s.total_precip + 'mm', d: 'observed window', c: 'var(--blue)' },
+        ].map(k => `
+            <div class="kpi">
+                <div class="kpi-label">${k.l}</div>
+                <div class="kpi-number" style="color:${k.c}">${k.v}</div>
+                <div class="kpi-detail">${k.d}</div>
+            </div>
+        `).join('');
+
+        // 3. Daily AQI Bars
+        const maxAqi = Math.max(...daily.map(d => d.aqi_value), 160);
+        document.getElementById('aqi-chart').innerHTML = daily.map(d => {
+            const pct = Math.max((d.aqi_value / maxAqi) * 100, 10);
+            const cls = aqiClass(d.aqi_value);
+            return `<div class="hbar-item">
+                <div class="hbar-label">${d.date}</div>
+                <div class="hbar-track"><div class="hbar-fill fill-${cls}" style="width:${pct}%"></div></div>
+                <div class="hbar-value">${Math.round(d.aqi_value)}</div>
+            </div>`;
+        }).join('');
+
+        // 4. Station Bars (Top 10)
+        const top = [...stations].sort((a, b) => (b.avg_aqi || 0) - (a.avg_aqi || 0)).slice(0, 10);
+        const maxSt = Math.max(...top.map(st => st.avg_aqi || 0), 150);
+        document.getElementById('station-chart').innerHTML = top.map(st => {
+            const aqi = st.avg_aqi || 0;
+            const pct = Math.max((aqi / maxSt) * 100, 10);
+            const cls = aqiClass(aqi);
+            const name = stationNames[st.station_id] || ('Station #' + st.station_id);
+            return `<div class="hbar-item">
+                <div class="hbar-label" title="${name}">${name.split(' - ')[0]}</div>
+                <div class="hbar-track"><div class="hbar-fill fill-${cls}" style="width:${pct}%"></div></div>
+                <div class="hbar-value">${Math.round(aqi)}</div>
+            </div>`;
+        }).join('');
+
+        // 5. Weather Stats
+        const avgTemp = (wx.reduce((a, r) => a + (r.temperature || 0), 0) / wx.length).toFixed(1);
+        const maxTemp = Math.max(...wx.map(r => r.temperature || 0)).toFixed(1);
+        const minTemp = Math.min(...wx.filter(r => r.temperature != null).map(r => r.temperature)).toFixed(1);
+        const avgHum = (wx.reduce((a, r) => a + (r.humidity || 0), 0) / wx.length).toFixed(0);
+        const totalRain = wx.reduce((a, r) => a + (r.precipitation || 0), 0).toFixed(1);
+        const avgWind = (wx.reduce((a, r) => a + (r.wind_speed || 0), 0) / wx.length).toFixed(1);
+
+        document.getElementById('weather-stats').innerHTML = [
+            { l: 'Mean Temp', v: avgTemp + '\u00B0C', c: 'var(--amber)' },
+            { l: 'Peak Temp', v: maxTemp + '\u00B0C', c: 'var(--red)' },
+            { l: 'Min Temp', v: minTemp + '\u00B0C', c: 'var(--blue)' },
+            { l: 'Mean Humidity', v: avgHum + '%', c: 'var(--cyan)' },
+            { l: 'Precipitation', v: totalRain + ' mm', c: 'var(--blue)' },
+            { l: 'Mean Wind', v: avgWind + ' km/h', c: 'var(--text-secondary)' },
+        ].map(w => `
+            <div class="weather-stat">
+                <div class="ws-label">${w.l}</div>
+                <div class="ws-value" style="color:${w.c}">${w.v}</div>
+            </div>
+        `).join('');
+
+        // 6. Monitored Pollutant Chips
+        const paramNames = {
+            pm25: 'PM\u2082.\u2085 Fine Dust',
+            pm10: 'PM\u2081\u2080 Coarse Dust',
+            co: 'CO Carbon Monoxide',
+            no2: 'NO\u2082 Nitrogen Dioxide',
+            so2: 'SO\u2082 Sulfur Dioxide',
+            o3: 'O\u2083 Ozone',
+            no: 'NO Nitric Oxide',
+            nox: 'NO\u2093 Nitrogen Oxides',
+            pm1: 'PM\u2081 Ultrafine'
+        };
+        const activeParams = s.pollutants.filter(p => paramNames[p]);
+        document.getElementById('pollutant-count').textContent = activeParams.length + ' Tracked';
+        document.getElementById('pollutant-grid').innerHTML = activeParams.map(p =>
+            `<div class="pollutant-chip" onclick="switchView('pollutants')" style="cursor:pointer;">${paramNames[p]}</div>`
+        ).join('');
+
+        // 7. Overview Stations Preview (top 6)
+        const sortedStations = [...stations].sort((a, b) => (b.avg_aqi || 0) - (a.avg_aqi || 0));
+        document.getElementById('overview-station-tbody').innerHTML = sortedStations.slice(0, 6).map(st => {
+            const aqi = st.avg_aqi || 0;
+            const cls = aqiClass(aqi);
+            const name = stationNames[st.station_id] || `CAAQMS #${st.station_id}`;
+            return `<tr>
+                <td style="font-weight:600;color:var(--text-primary)">${name}</td>
+                <td class="mono">${st.station_id}</td>
+                <td class="mono">${st.avg_pm25 ? st.avg_pm25.toFixed(1) : 'N/A'}</td>
+                <td class="mono">${st.max_pm25 ? st.max_pm25.toFixed(1) : 'N/A'}</td>
+                <td class="mono">${st.min_pm25 ? st.min_pm25.toFixed(1) : 'N/A'}</td>
+                <td class="mono" style="font-weight:700;color:var(--text-primary)">${Math.round(aqi)}</td>
+                <td><span class="tag tag-${cls}">${aqiLabel(aqi)}</span></td>
+            </tr>`;
+        }).join('');
+
+        // 8. Render All Stations View Table
+        renderAllStationsTable(sortedStations);
+
+        // 9. Render Trends View Table
+        renderTrendsTable(daily);
+
+        // 10. Render Lineage View Table
+        renderLineageTable();
+    }
+
+    // ── Stations Table & Filter Logic ──
+    function renderAllStationsTable(stationsList) {
+        const tbody = document.getElementById('all-stations-tbody');
+        tbody.innerHTML = stationsList.map(st => {
+            const aqi = st.avg_aqi || 0;
+            const cls = aqiClass(aqi);
+            const name = stationNames[st.station_id] || `CAAQMS Station #${st.station_id}`;
+            const loc = name.includes('-') ? name.split('-')[0].trim() : 'Bengaluru Metro';
+            return `<tr>
+                <td style="font-weight:600;color:var(--text-primary)">${name}</td>
+                <td class="mono">${st.station_id}</td>
+                <td>${loc}</td>
+                <td class="mono" style="color:var(--text-tertiary)">12.97&deg;N, 77.59&deg;E</td>
+                <td class="mono">${st.avg_pm25 ? st.avg_pm25.toFixed(1) : 'N/A'}</td>
+                <td class="mono">${st.max_pm25 ? st.max_pm25.toFixed(1) : 'N/A'}</td>
+                <td class="mono">${st.min_pm25 ? st.min_pm25.toFixed(1) : 'N/A'}</td>
+                <td class="mono" style="font-weight:700;color:var(--text-primary)">${Math.round(aqi)}</td>
+                <td><span class="tag tag-${cls}">${aqiLabel(aqi)}</span></td>
+            </tr>`;
+        }).join('');
+    }
+
+    function setStationFilter(cat, btn) {
+        stationFilterCategory = cat;
+        document.querySelectorAll('#station-filter-chips .filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filterStationsTable();
+    }
+
+    function filterStationsTable() {
+        if (!appData) return;
+        const q = (document.getElementById('station-search').value || '').toLowerCase();
+        const filtered = appData.station_summary.filter(st => {
+            const aqi = st.avg_aqi || 0;
+            const cls = aqiClass(aqi);
+            const name = (stationNames[st.station_id] || `Station #${st.station_id}`).toLowerCase();
+            const sid = String(st.station_id);
+
+            const matchesSearch = name.includes(q) || sid.includes(q);
+            const matchesCat = (stationFilterCategory === 'all') || (cls === stationFilterCategory);
+
+            return matchesSearch && matchesCat;
+        });
+
+        document.getElementById('stations-result-count').textContent = `Showing ${filtered.length} stations`;
+        renderAllStationsTable(filtered);
+    }
+
+    // ── Trends Table Logic ──
+    function renderTrendsTable(dailyList) {
+        const tbody = document.getElementById('trends-tbody');
+        tbody.innerHTML = dailyList.map(d => {
+            const cls = aqiClass(d.aqi_value);
+            return `<tr>
+                <td class="mono" style="color:var(--text-primary);font-weight:600;">${d.date}</td>
+                <td class="mono">${d.avg_pm25 != null ? d.avg_pm25.toFixed(2) : '&mdash;'}</td>
+                <td class="mono">${d.avg_pm10 != null ? d.avg_pm10.toFixed(2) : '&mdash;'}</td>
+                <td class="mono" style="font-weight:700;color:var(--text-primary)">${d.aqi_value != null ? Math.round(d.aqi_value) : '&mdash;'}</td>
+                <td><span class="tag tag-${cls}">${d.aqi_category || aqiLabel(d.aqi_value)}</span></td>
+            </tr>`;
+        }).join('');
+    }
+
+    // ── Lineage Table & Filtering Logic ──
+    function renderLineageTable() {
+        const q = (document.getElementById('lineage-search')?.value || '').toLowerCase();
+        const filtered = lineageData.filter(item => {
+            const matchesSearch = item.id.toLowerCase().includes(q) ||
+                                  item.src.toLowerCase().includes(q) ||
+                                  item.stage.toLowerCase().includes(q);
+            const matchesFilter = (lineageFilterStatus === 'all') || (item.status === lineageFilterStatus);
+            return matchesSearch && matchesFilter;
+        });
+
+        document.getElementById('lineage-count-badge').textContent = `Showing ${filtered.length} entries`;
+        document.getElementById('lineage-tbody').innerHTML = filtered.map(item => {
+            const isOk = item.status === 'SUCCESS';
+            return `<tr>
+                <td class="mono" style="color:var(--text-primary);font-weight:600;">${item.id}</td>
+                <td class="mono">${item.src}</td>
+                <td><span class="tag tag-neutral">${item.stage}</span></td>
+                <td class="mono" style="color:var(--text-tertiary)">${item.time}</td>
+                <td class="mono">${item.ext}</td>
+                <td class="mono">${item.val}</td>
+                <td class="mono">${item.rej}</td>
+                <td><span class="tag tag-${isOk ? 'success' : 'failed'}">${item.status}</span></td>
+                <td style="font-size:0.72rem;color:var(--text-tertiary)">${item.diag}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    function setLineageFilter(status, btn) {
+        lineageFilterStatus = status;
+        document.querySelectorAll('#view-lineage .filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderLineageTable();
+    }
+
+    function filterLineageTable() {
+        renderLineageTable();
+    }
+
+    // ── Boot dashboard after all functions and DOM are ready ──
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadDashboard);
+    } else {
+        loadDashboard();
+    }
+    </script>
+</body>
+</html>

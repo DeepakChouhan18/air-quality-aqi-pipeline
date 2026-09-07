@@ -1,0 +1,12 @@
+station_id,avg_pm25,max_pm25,min_pm25,avg_aqi,station_name,latitude,longitude,provider
+5607,5.99,5.99,5.99,25.0,"Peenya, Bengaluru - CPCB",13.0270199,77.494094,CPCB
+6973,12.0,12.0,12.0,50.0,"Jayanagar 5th Block, Bengaluru - KSPCB",12.920984,77.584908,CPCB
+6974,14.0,14.0,14.0,55.0,"Bapuji Nagar, Bengaluru - KSPCB",12.951913,77.539784,CPCB
+6975,45.0,45.0,45.0,124.4,"Silk Board, Bengaluru - KSPCB",12.917348,77.622813,CPCB
+6983,9.0,9.0,9.0,37.5,"Hombegowda Nagar, Bengaluru - KSPCB",12.938539,77.5901,CPCB
+6984,14.0,14.0,14.0,55.0,"Hebbal, Bengaluru - KSPCB",13.029152,77.585901,CPCB
+3409388,41.97,41.97,41.97,116.9,"Kasturi Nagar, Bengaluru - KSPCB",13.003872,77.664217,CPCB
+3409393,22.04,22.04,22.04,71.9,"Shivapura_Peenya, Bengaluru - KSPCB",13.0246342,77.5080115,CPCB
+3409434,27.96,27.96,27.96,84.4,"Jigani, Bengaluru - KSPCB",12.7816279,77.6299145,CPCB
+6206921,27.4,27.4,27.4,83.2,Koramangala,12.9370223,77.6115928,AirGradient
+6514356,12.9,12.9,12.9,52.7,"Malleswaram, Bangalore ",13.00074,77.56952,AirGradient
