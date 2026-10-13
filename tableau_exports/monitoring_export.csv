@@ -1,0 +1,3 @@
+checked_at,missing_rate,stale_data_flag,n_drifted_features,drift_triggered,rolling_rmse,rolling_mae,baseline_rmse,rmse_pct_change,rolling_f1,retrain_triggered,retrain_reason
+2026-10-11 17:53:10.077647+00:00,0.0,True,11,True,10.932795715332034,10.932795715332034,16.22985036917309,-0.32637729451297093,1.0,True,Feature drift: 11 features exceeded drift threshold (PSI > 0.2 or KS p < 0.05). Threshold is 3 features.
+2026-10-11 17:14:29.034354+00:00,0.0,True,11,True,,,,,,True,Feature drift: 11 features exceeded drift threshold (PSI > 0.2 or KS p < 0.05). Threshold is 3 features.

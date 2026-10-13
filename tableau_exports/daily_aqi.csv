@@ -1,0 +1,13 @@
+date,avg_pm25,avg_pm10,avg_temperature,avg_humidity,avg_wind_speed,total_precipitation,aqi_value,aqi_category,city
+2025-01-13,,40.4389877319336,,,,,,Unknown,Bengaluru
+2025-05-19,31.696969812566586,,,,,,92.2,Moderate,Bengaluru
+2025-12-10,133.28366394042968,,,,,,191.2,Unhealthy,Bengaluru
+2026-04-23,46.1,,,,,,127.1,Unhealthy for Sensitive Groups,Bengaluru
+2026-07-07,13.22,29.07,,,,,53.4,Moderate,Bengaluru
+2026-07-25,35.85,53.77,,,,,101.9,Unhealthy for Sensitive Groups,Bengaluru
+2026-08-06,17.51,50.45,,,,,62.4,Moderate,Bengaluru
+2026-08-26,,69.13,,,,,,Unknown,Bengaluru
+2026-08-30,12.9,,,,,,52.7,Moderate,Bengaluru
+2026-09-02,,65.5,24.670833333333334,70.58333333333333,10.979166666666666,1.8,,Unknown,Bengaluru
+2026-09-03,21.32888888888889,60.48777777777778,24.125,73.33333333333333,10.958333333333334,3.6,70.4,Moderate,Bengaluru
+2026-09-07,27.4,,25.8875,61.958333333333336,10.208333333333334,0.1,83.2,Moderate,Bengaluru

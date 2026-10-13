@@ -1,30 +1,141 @@
 version: "3.8"
 
+# Part 2 MLOps docker-compose.yml
+# Services: postgres (Part 1, unchanged) + mlflow + api + streamlit
+#
+# Usage:
+#   docker compose up --build          # start all services
+#   docker compose up -d postgres mlflow  # start only backend services
+#
+# For Airflow, follow the official quick-start compose and mount
+# this project's dags/ and src/ as per Part 1 README.
+
 services:
+
+  # ── Postgres ─────────────────────────────────────────────────────────────
+  # Unchanged from Part 1. Auto-runs sql/*.sql on first boot.
   postgres:
     image: postgres:16
     container_name: aqi_postgres
     restart: always
     environment:
-      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_USER:     ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-      POSTGRES_DB: ${DB_NAME:-aqi_db}
+      POSTGRES_DB:       ${DB_NAME:-aqi_db}
     ports:
       - "5432:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
-      - ./sql:/docker-entrypoint-initdb.d   # auto-runs schemas.sql/tables.sql/analytics.sql on first start
+      # All SQL files are run in alphabetical order on first boot.
+      # schemas.sql → tables.sql → analytics.sql → ml_schema.sql
+      - ./sql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-aqi_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # NOTE: for a full local Airflow setup, use the official quick-start
-  # docker-compose.yaml from https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html
-  # and mount this project's dags/ and src/ folders into it, e.g.:
-  #
-  # volumes:
-  #   - ./dags:/opt/airflow/dags
-  #   - ./src:/opt/airflow/src
-  #
-  # Keeping Airflow's compose file separate avoids fighting with its
-  # many required services (webserver, scheduler, triggerer, redis).
+  # ── MLflow tracking server ─────────────────────────────────────────────────
+  # WHY A SEPARATE MLFLOW SERVICE:
+  # MLflow's tracking server persists experiments and artifacts to a
+  # backend store (here: Postgres for metadata + local volume for artifacts).
+  # Running it as a service means training scripts on the host machine,
+  # in Docker, or in Airflow all log to the same place.
+  mlflow:
+    image: python:3.11-slim
+    container_name: aqi_mlflow
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      MLFLOW_BACKEND_STORE_URI: >-
+        postgresql+psycopg2://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-aqi_db}
+      MLFLOW_ARTIFACT_ROOT: /mlflow/artifacts
+    ports:
+      - "${MLFLOW_PORT:-5001}:5001"
+    volumes:
+      - mlflow_artifacts:/mlflow/artifacts
+    command: >
+      sh -c "pip install --quiet mlflow psycopg2-binary &&
+             mlflow server
+               --backend-store-uri postgresql+psycopg2://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-aqi_db}
+               --default-artifact-root /mlflow/artifacts
+               --host 0.0.0.0
+               --port 5001"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5001/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ── FastAPI inference API ─────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aqi_api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mlflow:
+        condition: service_healthy
+    environment:
+      DB_HOST:                postgres
+      DB_PORT:                "5432"
+      DB_NAME:                ${DB_NAME:-aqi_db}
+      DB_USER:                ${DB_USER:-postgres}
+      DB_PASSWORD:            ${DB_PASSWORD:-postgres}
+      MLFLOW_TRACKING_URI:    http://mlflow:5001
+      TARGET_CITY:            ${TARGET_CITY:-Bengaluru}
+      TARGET_LAT:             ${TARGET_LAT:-12.9716}
+      TARGET_LON:             ${TARGET_LON:-77.5946}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      # Mount data directory so the API can access feature cache
+      - ./data:/app/data
+      - ./reports:/app/reports
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+  # ── Streamlit dashboard ────────────────────────────────────────────────────
+  # Optional — comment out if you don't need the Streamlit UI
+  streamlit:
+    image: python:3.11-slim
+    container_name: aqi_streamlit
+    restart: unless-stopped
+    depends_on:
+      - api
+      - postgres
+    environment:
+      DB_HOST:             postgres
+      DB_PORT:             "5432"
+      DB_NAME:             ${DB_NAME:-aqi_db}
+      DB_USER:             ${DB_USER:-postgres}
+      DB_PASSWORD:         ${DB_PASSWORD:-postgres}
+      API_URL:             http://api:8000
+      MLFLOW_TRACKING_URI: http://mlflow:5001
+      TARGET_CITY:         ${TARGET_CITY:-Bengaluru}
+    ports:
+      - "${STREAMLIT_PORT:-8501}:8501"
+    volumes:
+      - ./app:/dashboard/app
+      - ./src:/dashboard/src
+      - ./data:/dashboard/data
+      - ./reports:/dashboard/reports
+      - ./.env:/dashboard/.env
+    working_dir: /dashboard
+    command: >
+      sh -c "pip install --quiet streamlit plotly requests pandas python-dotenv psycopg2-binary SQLAlchemy &&
+             streamlit run app/streamlit_app.py --server.port=8501 --server.address=0.0.0.0"
 
 volumes:
   pg_data:
+  mlflow_artifacts:

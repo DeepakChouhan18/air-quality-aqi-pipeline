@@ -26,3 +26,9 @@ silently dropped — every rejected row is written to `data/rejected/`
 
 ## 6. Station validation
 **Rule:** Station metadata (`core.stations`) is loaded from OpenAQ's `/locations` endpoint, which provides `location_id`, `name`, `city`, and coordinates directly — no separate validation needed beyond the standard missing-field check.
+
+## 7. Stale sensor recency filtering (OpenAQ /latest endpoint)
+**Known Characteristic:** OpenAQ's `/latest` measurements endpoint returns the last recorded reading for every sensor associated with a location. Inactive or decommissioned monitoring stations still report their last historical measurement, which may be months or years old (e.g., readings from 2018 or 2022 appearing alongside current 2026 data).
+**Mitigation Rule:** In `src/transformation/create_analytics.py` (`filter_recent_records`), before grouping or aggregating records by date, pollutant or weather measurements whose `recorded_at` timestamp is older than 30 days prior to the most recent `recorded_at` in the dataset are filtered out. This is applied at the entry of the analytics pipeline (in `src/export/export_for_tableau.py` and `src/database/load_postgres.py`) and inside each individual analytics builder (`build_daily_city_aqi`, `build_pollutant_summary`, and `build_station_summary`) for full consistency.
+**Why:** Grouping multi-year historical artifacts into current daily time series skews longitudinal trends and misrepresents city-wide air quality indices. A 30-day rolling recency window guarantees that analytics reflect active, synchronized environmental observations across all views (Daily AQI, Pollutant Analysis, and Station Comparison).
+

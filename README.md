@@ -116,3 +116,108 @@ Every ingestion and transform run writes a record to `staging.pipeline_runs` (an
 pytest tests/ -v
 ```
 CI runs these automatically on every push via `.github/workflows/ci.yml`.
+
+---
+
+## Part 2 — MLOps Extension
+
+### Overview
+
+Part 2 adds a full MLOps layer on top of the Part 1 data engineering pipeline:
+historical data backfill → feature pipeline → model training (Ridge/RF/XGBoost) →
+MLflow experiment tracking + model registry → FastAPI inference service → Docker →
+monitoring (drift + performance) → automated Airflow-based retraining.
+
+### New Data Sources
+
+| Source | Data | Auth |
+|---|---|---|
+| [Open-Meteo Air Quality API](https://air-quality-api.open-meteo.com) | PM2.5, PM10, NO2, SO2, O3, CO, US AQI (historical hourly) | No key required |
+| [Open-Meteo Archive API](https://archive-api.open-meteo.com) | Temperature, humidity, wind, precipitation (historical hourly) | No key required |
+
+### Part 2 Setup (from a fresh clone)
+
+```bash
+# 1. Clone and install Part 1 dependencies
+git clone <your-repo-url>
+cd air-quality-data-engineering
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+
+# 2. Install Part 2 ML/API dependencies
+pip install -r requirements-ml.txt
+
+# 3. Configure environment
+cp .env.example .env
+# Edit .env: set OPENAQ_API_KEY and DB credentials
+
+# 4. Start Postgres (and MLflow + API)
+make docker-up
+# OR for just Postgres:
+docker compose up -d postgres
+
+# 5. Run the SQL to create the ml schema
+psql -h localhost -U postgres -d aqi_db -f sql/ml_schema.sql
+
+# 6. Backfill ≥12 months of historical data
+make backfill
+
+# 7. Build feature table
+make features
+
+# 8. Train models (logs to MLflow at http://localhost:5001)
+make train
+
+# 9. Register best models
+make register
+
+# 10. Start inference API
+make serve
+# Test: curl http://localhost:8000/health
+
+# 11. Run monitoring
+make monitor
+```
+
+### Verify End-to-End
+
+```bash
+# Health check
+curl http://localhost:8000/health
+
+# Predict next-day AQI for Bengaluru
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{"city": "Bengaluru", "target_date": "2025-06-15"}'
+
+# Run monitoring report
+make monitor
+cat reports/monitoring_report.md
+
+# All tests
+make test
+```
+
+### Docker (all services)
+
+```bash
+make docker-up
+# Services:
+#   Postgres:   localhost:5432
+#   MLflow UI:  http://localhost:5001
+#   API docs:   http://localhost:8000/docs
+#   Streamlit:  http://localhost:8501
+```
+
+### Key Docs (Part 2)
+
+| Document | Purpose |
+|---|---|
+| `docs/part2_architecture.md` | Mermaid architecture diagram |
+| `docs/ml_data_dictionary.md` | Every feature, formula, leakage-prevention |
+| `docs/monitoring_and_retraining.md` | PSI/KS drift detection, retrain policy |
+| `docs/model_card.md` | Intended use, limitations, ethical considerations |
+| `reports/model_comparison.md` | All model metrics (generated after `make train`) |
+| `reports/monitoring_report.md` | Latest monitoring run (generated after `make monitor`) |
+| `reports/part2_report.md` | Full project report |
+

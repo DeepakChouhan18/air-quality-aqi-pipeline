@@ -15,6 +15,7 @@ from src.transformation.create_analytics import (
     build_daily_city_aqi,
     build_station_summary,
     build_pollutant_summary,
+    filter_recent_records,
 )
 from src.ingestion.ingestion_utils import PipelineRun
 from src.config import TARGET_CITY
@@ -87,6 +88,16 @@ def build_and_load_analytics(pollutant_df: pd.DataFrame, weather_df: pd.DataFram
     run = PipelineRun(source="analytics", stage="load")
 
     try:
+        try:
+            with engine.connect() as conn:
+                pollutant_df = pd.read_sql("SELECT * FROM core.air_quality", conn)
+                weather_df = pd.read_sql("SELECT * FROM core.weather", conn)
+        except Exception:
+            pass
+
+        pollutant_df = filter_recent_records(pollutant_df)
+        weather_df = filter_recent_records(weather_df)
+
         daily = build_daily_city_aqi(pollutant_df, weather_df)
         daily["city"] = TARGET_CITY
         daily.to_sql("daily_aqi", engine, schema="analytics", if_exists="replace", index=False)

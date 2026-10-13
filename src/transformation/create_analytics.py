@@ -66,15 +66,37 @@ def aqi_to_category(aqi_value: float) -> str:
     return "Hazardous"
 
 
+def filter_recent_records(df: pd.DataFrame, days: int = 730) -> pd.DataFrame:
+    """
+    Filter records to only keep rows within `days` of the most recent recorded_at.
+
+    OpenAQ's /latest endpoint returns the last known reading for each sensor.
+    For inactive or decommissioned sensors, this "latest" reading can be years old
+    (e.g. 2017, 2018, or 2022 entries mixed in with current 2026 data).
+    Dropping records older than `days` before the dataset's max timestamp ensures
+    that time series, pollutant distributions, and station summaries reflect
+    active, synchronized observations rather than stale historical artifacts.
+    """
+    if df is None or df.empty or "recorded_at" not in df.columns:
+        return df.copy() if df is not None else df
+    df = df.copy()
+    dt = pd.to_datetime(df["recorded_at"], utc=True)
+    if dt.notna().any():
+        cutoff = dt.max() - pd.Timedelta(days=days)
+        return df[dt >= cutoff].copy()
+    return df
+
+
 def build_daily_city_aqi(pollutant_df: pd.DataFrame, weather_df: pd.DataFrame) -> pd.DataFrame:
     """
     Produces analytics.daily_aqi: one row per city per day, with average
     pollutant levels, an AQI value/category, and average weather.
     """
-    pollutant_df = pollutant_df.copy()
-    pollutant_df["date"] = pd.to_datetime(pollutant_df["recorded_at"]).dt.date
-    weather_df = weather_df.copy()
-    weather_df["date"] = pd.to_datetime(weather_df["recorded_at"]).dt.date
+    pollutant_df = filter_recent_records(pollutant_df)
+    weather_df = filter_recent_records(weather_df)
+
+    pollutant_df["date"] = pd.to_datetime(pollutant_df["recorded_at"], utc=True).dt.date
+    weather_df["date"] = pd.to_datetime(weather_df["recorded_at"], utc=True).dt.date
 
     pm25 = pollutant_df[pollutant_df["parameter"].str.lower() == "pm25"]
     daily_pm25 = pm25.groupby("date")["value"].mean().reset_index(name="avg_pm25")
@@ -100,7 +122,8 @@ def build_daily_city_aqi(pollutant_df: pd.DataFrame, weather_df: pd.DataFrame) -
 
 def build_station_summary(pollutant_df: pd.DataFrame) -> pd.DataFrame:
     """One row per station: avg/max/min AQI-relevant PM2.5 levels."""
-    pm25 = pollutant_df[pollutant_df["parameter"].str.lower() == "pm25"]
+    df = filter_recent_records(pollutant_df)
+    pm25 = df[df["parameter"].str.lower() == "pm25"]
     summary = pm25.groupby("station_id")["value"].agg(
         avg_pm25="mean", max_pm25="max", min_pm25="min"
     ).reset_index()
@@ -110,8 +133,8 @@ def build_station_summary(pollutant_df: pd.DataFrame) -> pd.DataFrame:
 
 def build_pollutant_summary(pollutant_df: pd.DataFrame) -> pd.DataFrame:
     """One row per day per pollutant: avg/max concentration."""
-    df = pollutant_df.copy()
-    df["date"] = pd.to_datetime(df["recorded_at"]).dt.date
+    df = filter_recent_records(pollutant_df)
+    df["date"] = pd.to_datetime(df["recorded_at"], utc=True).dt.date
     return df.groupby(["date", "parameter"])["value"].agg(
         avg_value="mean", max_value="max"
     ).reset_index()
