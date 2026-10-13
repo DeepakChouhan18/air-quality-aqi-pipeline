@@ -66,7 +66,7 @@ def aqi_to_category(aqi_value: float) -> str:
     return "Hazardous"
 
 
-def filter_recent_records(df: pd.DataFrame, days: int = 30) -> pd.DataFrame:
+def filter_recent_records(df: pd.DataFrame, days: int = 730) -> pd.DataFrame:
     """
     Filter records to only keep rows within `days` of the most recent recorded_at.
 

@@ -1,6 +1,90 @@
 window.DASHBOARD_DATA = {
   "daily_aqi": [
     {
+      "date": "2025-01-13",
+      "avg_pm25": null,
+      "avg_pm10": 40.4389877319,
+      "avg_temperature": null,
+      "avg_humidity": null,
+      "avg_wind_speed": null,
+      "total_precipitation": null,
+      "aqi_value": null,
+      "aqi_category": "Unknown",
+      "city": "Bengaluru"
+    },
+    {
+      "date": "2025-05-19",
+      "avg_pm25": 31.6969698126,
+      "avg_pm10": null,
+      "avg_temperature": null,
+      "avg_humidity": null,
+      "avg_wind_speed": null,
+      "total_precipitation": null,
+      "aqi_value": 92.2,
+      "aqi_category": "Moderate",
+      "city": "Bengaluru"
+    },
+    {
+      "date": "2025-12-10",
+      "avg_pm25": 133.2836639404,
+      "avg_pm10": null,
+      "avg_temperature": null,
+      "avg_humidity": null,
+      "avg_wind_speed": null,
+      "total_precipitation": null,
+      "aqi_value": 191.2,
+      "aqi_category": "Unhealthy",
+      "city": "Bengaluru"
+    },
+    {
+      "date": "2026-04-23",
+      "avg_pm25": 46.1,
+      "avg_pm10": null,
+      "avg_temperature": null,
+      "avg_humidity": null,
+      "avg_wind_speed": null,
+      "total_precipitation": null,
+      "aqi_value": 127.1,
+      "aqi_category": "Unhealthy for Sensitive Groups",
+      "city": "Bengaluru"
+    },
+    {
+      "date": "2026-07-07",
+      "avg_pm25": 13.22,
+      "avg_pm10": 29.07,
+      "avg_temperature": null,
+      "avg_humidity": null,
+      "avg_wind_speed": null,
+      "total_precipitation": null,
+      "aqi_value": 53.4,
+      "aqi_category": "Moderate",
+      "city": "Bengaluru"
+    },
+    {
+      "date": "2026-07-25",
+      "avg_pm25": 35.85,
+      "avg_pm10": 53.77,
+      "avg_temperature": null,
+      "avg_humidity": null,
+      "avg_wind_speed": null,
+      "total_precipitation": null,
+      "aqi_value": 101.9,
+      "aqi_category": "Unhealthy for Sensitive Groups",
+      "city": "Bengaluru"
+    },
+    {
+      "date": "2026-08-06",
+      "avg_pm25": 17.51,
+      "avg_pm10": 50.45,
+      "avg_temperature": null,
+      "avg_humidity": null,
+      "avg_wind_speed": null,
+      "total_precipitation": null,
+      "aqi_value": 62.4,
+      "aqi_category": "Moderate",
+      "city": "Bengaluru"
+    },
+    {
       "date": "2026-08-26",
       "avg_pm25": null,
       "avg_pm10": 69.13,
@@ -62,6 +146,17 @@ window.DASHBOARD_DATA = {
     }
   ],
   "station_summary": [
+    {
+      "station_id": 5548,
+      "avg_pm25": 17.51,
+      "max_pm25": 17.51,
+      "min_pm25": 17.51,
+      "avg_aqi": 62.4,
+      "station_name": "BTM Layout, Bengaluru - CPCB",
+      "latitude": 12.9135218,
+      "longitude": 77.5950804,
+      "provider": "CPCB"
+    },
     {
       "station_id": 5607,
       "avg_pm25": 5.99,
@@ -129,6 +224,39 @@ window.DASHBOARD_DATA = {
       "provider": "CPCB"
     },
     {
+      "station_id": 2498781,
+      "avg_pm25": 31.6969698126,
+      "max_pm25": 31.6969698126,
+      "min_pm25": 31.6969698126,
+      "avg_aqi": 92.2,
+      "station_name": "SiriJaya",
+      "latitude": 12.9091536354,
+      "longitude": 77.5247618309,
+      "provider": "AirGradient"
+    },
+    {
+      "station_id": 3409312,
+      "avg_pm25": 35.85,
+      "max_pm25": 35.85,
+      "min_pm25": 35.85,
+      "avg_aqi": 101.9,
+      "station_name": "BWSSB Kadabesanahalli, Bengaluru - CPCB",
+      "latitude": 12.9352049,
+      "longitude": 77.6814488,
+      "provider": "CPCB"
+    },
+    {
+      "station_id": 3409385,
+      "avg_pm25": 13.22,
+      "max_pm25": 13.22,
+      "min_pm25": 13.22,
+      "avg_aqi": 53.4,
+      "station_name": "RVCE-Mailasandra, Bengaluru - KSPCB",
+      "latitude": 12.921418,
+      "longitude": 77.502466,
+      "provider": "CPCB"
+    },
+    {
       "station_id": 3409388,
       "avg_pm25": 41.97,
       "max_pm25": 41.97,
@@ -162,6 +290,28 @@ window.DASHBOARD_DATA = {
       "provider": "CPCB"
     },
     {
+      "station_id": 6119271,
+      "avg_pm25": 46.1,
+      "max_pm25": 46.1,
+      "min_pm25": 46.1,
+      "avg_aqi": 127.1,
+      "station_name": "Kumaraswamy Layout",
+      "latitude": 12.9044,
+      "longitude": 77.5649,
+      "provider": "AirGradient"
+    },
+    {
+      "station_id": 6146655,
+      "avg_pm25": 133.2836639404,
+      "max_pm25": 133.2836639404,
+      "min_pm25": 133.2836639404,
+      "avg_aqi": 191.2,
+      "station_name": "Bellandur",
+      "latitude": 12.9178128,
+      "longitude": 77.6955288,
+      "provider": "AirGradient"
+    },
+    {
       "station_id": 6206921,
       "avg_pm25": 27.4,
       "max_pm25": 27.4,
@@ -185,6 +335,336 @@ window.DASHBOARD_DATA = {
     }
   ],
   "pollutant_summary": [
+    {
+      "date": "2025-01-13",
+      "parameter": "pm10",
+      "avg_value": 40.4389877319,
+      "max_value": 40.4389877319
+    },
+    {
+      "date": "2025-05-19",
+      "parameter": "pm1",
+      "avg_value": 18.7418833646,
+      "max_value": 18.7418833646
+    },
+    {
+      "date": "2025-05-19",
+      "parameter": "pm25",
+      "avg_value": 31.6969698126,
+      "max_value": 31.6969698126
+    },
+    {
+      "date": "2025-05-19",
+      "parameter": "relativehumidity",
+      "avg_value": 94.9945345792,
+      "max_value": 94.9945345792
+    },
+    {
+      "date": "2025-05-19",
+      "parameter": "temperature",
+      "avg_value": 22.2404167869,
+      "max_value": 22.2404167869
+    },
+    {
+      "date": "2025-05-19",
+      "parameter": "um003",
+      "avg_value": 4691.7646262429,
+      "max_value": 4691.7646262429
+    },
+    {
+      "date": "2025-12-10",
+      "parameter": "pm1",
+      "avg_value": 117.9166666667,
+      "max_value": 117.9166666667
+    },
+    {
+      "date": "2025-12-10",
+      "parameter": "pm25",
+      "avg_value": 133.2836639404,
+      "max_value": 133.2836639404
+    },
+    {
+      "date": "2026-01-12",
+      "parameter": "relativehumidity",
+      "avg_value": 48.4058331807,
+      "max_value": 48.4058331807
+    },
+    {
+      "date": "2026-01-12",
+      "parameter": "temperature",
+      "avg_value": 25.6613337517,
+      "max_value": 25.6613337517
+    },
+    {
+      "date": "2026-01-12",
+      "parameter": "um003",
+      "avg_value": 3132.0918294271,
+      "max_value": 3132.0918294271
+    },
+    {
+      "date": "2026-04-23",
+      "parameter": "pm1",
+      "avg_value": 27.8,
+      "max_value": 27.8
+    },
+    {
+      "date": "2026-04-23",
+      "parameter": "pm25",
+      "avg_value": 46.1,
+      "max_value": 46.1
+    },
+    {
+      "date": "2026-04-23",
+      "parameter": "relativehumidity",
+      "avg_value": 42.0,
+      "max_value": 42.0
+    },
+    {
+      "date": "2026-04-23",
+      "parameter": "temperature",
+      "avg_value": 25.3,
+      "max_value": 25.3
+    },
+    {
+      "date": "2026-04-23",
+      "parameter": "um003",
+      "avg_value": 1850.0,
+      "max_value": 1850.0
+    },
+    {
+      "date": "2026-06-03",
+      "parameter": "wind_direction",
+      "avg_value": 90.0,
+      "max_value": 90.0
+    },
+    {
+      "date": "2026-06-23",
+      "parameter": "wind_speed",
+      "avg_value": 2.0,
+      "max_value": 2.0
+    },
+    {
+      "date": "2026-06-26",
+      "parameter": "wind_speed",
+      "avg_value": 1.95,
+      "max_value": 2.3
+    },
+    {
+      "date": "2026-07-07",
+      "parameter": "co",
+      "avg_value": 0.13,
+      "max_value": 0.13
+    },
+    {
+      "date": "2026-07-07",
+      "parameter": "no",
+      "avg_value": 5.23,
+      "max_value": 5.23
+    },
+    {
+      "date": "2026-07-07",
+      "parameter": "no2",
+      "avg_value": 35.7,
+      "max_value": 35.7
+    },
+    {
+      "date": "2026-07-07",
+      "parameter": "nox",
+      "avg_value": 0.04101,
+      "max_value": 0.04101
+    },
+    {
+      "date": "2026-07-07",
+      "parameter": "o3",
+      "avg_value": 29.3,
+      "max_value": 29.3
+    },
+    {
+      "date": "2026-07-07",
+      "parameter": "pm10",
+      "avg_value": 29.07,
+      "max_value": 29.07
+    },
+    {
+      "date": "2026-07-07",
+      "parameter": "pm25",
+      "avg_value": 13.22,
+      "max_value": 13.22
+    },
+    {
+      "date": "2026-07-07",
+      "parameter": "relativehumidity",
+      "avg_value": 51.28,
+      "max_value": 51.28
+    },
+    {
+      "date": "2026-07-07",
+      "parameter": "so2",
+      "avg_value": 6.84,
+      "max_value": 6.84
+    },
+    {
+      "date": "2026-07-07",
+      "parameter": "temperature",
+      "avg_value": 27.23,
+      "max_value": 27.23
+    },
+    {
+      "date": "2026-07-07",
+      "parameter": "wind_direction",
+      "avg_value": 267.18,
+      "max_value": 267.18
+    },
+    {
+      "date": "2026-07-07",
+      "parameter": "wind_speed",
+      "avg_value": 2.07,
+      "max_value": 2.07
+    },
+    {
+      "date": "2026-07-25",
+      "parameter": "co",
+      "avg_value": 0.76,
+      "max_value": 0.76
+    },
+    {
+      "date": "2026-07-25",
+      "parameter": "no",
+      "avg_value": 0.53,
+      "max_value": 0.53
+    },
+    {
+      "date": "2026-07-25",
+      "parameter": "no2",
+      "avg_value": 2.0,
+      "max_value": 2.0
+    },
+    {
+      "date": "2026-07-25",
+      "parameter": "nox",
+      "avg_value": 0.00254,
+      "max_value": 0.00254
+    },
+    {
+      "date": "2026-07-25",
+      "parameter": "o3",
+      "avg_value": 23.2,
+      "max_value": 23.2
+    },
+    {
+      "date": "2026-07-25",
+      "parameter": "pm10",
+      "avg_value": 53.77,
+      "max_value": 53.77
+    },
+    {
+      "date": "2026-07-25",
+      "parameter": "pm25",
+      "avg_value": 35.85,
+      "max_value": 35.85
+    },
+    {
+      "date": "2026-07-25",
+      "parameter": "relativehumidity",
+      "avg_value": 65.44,
+      "max_value": 65.44
+    },
+    {
+      "date": "2026-07-25",
+      "parameter": "so2",
+      "avg_value": 2.89,
+      "max_value": 2.89
+    },
+    {
+      "date": "2026-07-25",
+      "parameter": "temperature",
+      "avg_value": 24.44,
+      "max_value": 24.44
+    },
+    {
+      "date": "2026-07-25",
+      "parameter": "wind_direction",
+      "avg_value": 115.17,
+      "max_value": 115.17
+    },
+    {
+      "date": "2026-07-25",
+      "parameter": "wind_speed",
+      "avg_value": 1.59,
+      "max_value": 1.59
+    },
+    {
+      "date": "2026-08-06",
+      "parameter": "co",
+      "avg_value": 0.96,
+      "max_value": 0.96
+    },
+    {
+      "date": "2026-08-06",
+      "parameter": "no",
+      "avg_value": 5.85,
+      "max_value": 7.0
+    },
+    {
+      "date": "2026-08-06",
+      "parameter": "no2",
+      "avg_value": 22.55,
+      "max_value": 22.55
+    },
+    {
+      "date": "2026-08-06",
+      "parameter": "nox",
+      "avg_value": 0.02763,
+      "max_value": 0.02866
+    },
+    {
+      "date": "2026-08-06",
+      "parameter": "o3",
+      "avg_value": 23.45,
+      "max_value": 23.45
+    },
+    {
+      "date": "2026-08-06",
+      "parameter": "pm10",
+      "avg_value": 50.45,
+      "max_value": 50.45
+    },
+    {
+      "date": "2026-08-06",
+      "parameter": "pm25",
+      "avg_value": 17.51,
+      "max_value": 17.51
+    },
+    {
+      "date": "2026-08-06",
+      "parameter": "relativehumidity",
+      "avg_value": 84.85,
+      "max_value": 84.85
+    },
+    {
+      "date": "2026-08-06",
+      "parameter": "so2",
+      "avg_value": 15.69,
+      "max_value": 15.69
+    },
+    {
+      "date": "2026-08-06",
+      "parameter": "temperature",
+      "avg_value": 26.26,
+      "max_value": 26.26
+    },
+    {
+      "date": "2026-08-06",
+      "parameter": "wind_direction",
+      "avg_value": 216.62,
+      "max_value": 216.62
+    },
+    {
+      "date": "2026-08-06",
+      "parameter": "wind_speed",
+      "avg_value": 0.98,
+      "max_value": 0.98
+    },
     {
       "date": "2026-08-08",
       "parameter": "temperature",
@@ -3051,8 +3531,8 @@ window.DASHBOARD_DATA = {
     }
   ],
   "stats": {
-    "total_stations": 11,
-    "total_measurements": 128,
+    "total_stations": 17,
+    "total_measurements": 186,
     "total_weather_records": 336,
     "pollutants": [
       "co",

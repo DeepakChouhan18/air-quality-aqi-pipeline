@@ -88,6 +88,13 @@ def build_and_load_analytics(pollutant_df: pd.DataFrame, weather_df: pd.DataFram
     run = PipelineRun(source="analytics", stage="load")
 
     try:
+        try:
+            with engine.connect() as conn:
+                pollutant_df = pd.read_sql("SELECT * FROM core.air_quality", conn)
+                weather_df = pd.read_sql("SELECT * FROM core.weather", conn)
+        except Exception:
+            pass
+
         pollutant_df = filter_recent_records(pollutant_df)
         weather_df = filter_recent_records(weather_df)
 
